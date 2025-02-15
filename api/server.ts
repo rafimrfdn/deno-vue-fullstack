@@ -1,71 +1,51 @@
-// backend/server.ts
-import { Hono } from "https://deno.land/x/hono/mod.ts";
-import { cors } from "https://deno.land/x/hono/middleware.ts";
-import { DB } from "https://deno.land/x/sqlite/mod.ts";
+import { Hono } from 'https://deno.land/x/hono/mod.ts';
+import { serveStatic } from 'https://deno.land/x/hono/middleware.ts';
+import { cors } from 'https://deno.land/x/hono/middleware.ts';
+import * as path from 'https://deno.land/std@0.114.0/path/mod.ts';
 
-const db = new DB("test.db");
+const isProduction = Deno.env.get('NODE_ENV') === 'production';
+const port = Deno.env.get('PORT') || 5173;
+const base = Deno.env.get('BASE') || '/';
 
-// Initialize the database
-db.execute(`
-  CREATE TABLE IF NOT EXISTS people (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT
-  )
-`);
-
-// Insert some initial data if the table is empty
-const count = db.query("SELECT COUNT(*) FROM people")[0][0];
-if (count === 0) {
-  for (const name of ["Peter Parker", "Clark Kent", "Bruce Wayne"]) {
-    db.query("INSERT INTO people (name) VALUES (?)", [name]);
-  }
-}
-
-// Create a new Hono app
 const app = new Hono();
 
-// Enable CORS for all routes
-app.use("*", cors());
+app.use('*', cors());
 
-// GET all people
-app.get("/api/people", (c) => {
-  const people = db.query("SELECT id, name FROM people");
-  return c.json(people.map(([id, name]) => ({ id, name })));
-});
+if (isProduction) {
+  app.use(base, serveStatic({ root: './dist/client' }));
+  app.get('*', async (c) => {
+    const filePath = path.join(Deno.cwd(), 'dist/client/index.html');
+    return await serveStatic({ path: filePath })(c);
+  });
+} else {
+  const { createServer } = await import('vite');
+  const vite = await createServer({
+    server: { middlewareMode: true },
+    appType: 'custom',
+    base,
+  });
+  app.use(async (c, next) => {
+    await vite.middlewares(c.req.raw, c.res);
+    await next();
+  });
+  app.get('*', async (c) => {
+    try {
+      const url = new URL(c.req.url).pathname.replace(base, '');
+      let template = await Deno.readTextFile('./index.html');
+      template = await vite.transformIndexHtml(url, template);
+      const { render } = await vite.ssrLoadModule('/src/entry-server.js');
+      const rendered = await render(url);
+      const html = template
+        .replace(`<!--app-head-->`, rendered.head ?? '')
+        .replace(`<!--app-html-->`, rendered.html ?? '');
+      return c.html(html);
+    } catch (e) {
+      vite.ssrFixStacktrace(e);
+      console.log(e.stack);
+      return c.text(e.stack, 500);
+    }
+  });
+}
 
-// GET a single person by ID
-app.get("/api/people/:id", (c) => {
-  const id = c.req.param("id");
-  const [person] = db.query("SELECT id, name FROM people WHERE id = ?", [id]);
-  if (person) {
-    return c.json({ id: person[0], name: person[1] });
-  } else {
-    return c.json({ error: "Person not found" }, 404);
-  }
-});
-
-// POST a new person
-app.post("/api/people", async (c) => {
-  const { name } = await c.req.json();
-  db.query("INSERT INTO people (name) VALUES (?)", [name]);
-  return c.json({ message: "Person added successfully" });
-});
-
-// PUT (update) a person by ID
-app.put("/api/people/:id", async (c) => {
-  const id = c.req.param("id");
-  const { name } = await c.req.json();
-  db.query("UPDATE people SET name = ? WHERE id = ?", [name, id]);
-  return c.json({ message: "Person updated successfully" });
-});
-
-// DELETE a person by ID
-app.delete("/api/people/:id", (c) => {
-  const id = c.req.param("id");
-  db.query("DELETE FROM people WHERE id = ?", [id]);
-  return c.json({ message: "Person deleted successfully" });
-});
-
-// Start the server
-console.log("Server running on http://localhost:8000");
+console.log(`Server running on http://localhost:${port}`);
 Deno.serve(app.fetch);
