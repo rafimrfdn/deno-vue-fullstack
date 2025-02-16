@@ -28,13 +28,13 @@ const app = new Hono();
 app.use("*", cors());
 
 // GET all people
-app.get("/api/people", (c) => {
+app.get("/api/people", (c: any) => {
   const people = db.query("SELECT id, name FROM people");
   return c.json(people.map(([id, name]) => ({ id, name })));
 });
 
 // GET a single person by ID
-app.get("/api/people/:id", (c) => {
+app.get("/api/people/:id", (c: any) => {
   const id = c.req.param("id");
   const [person] = db.query("SELECT id, name FROM people WHERE id = ?", [id]);
   if (person) {
@@ -45,14 +45,14 @@ app.get("/api/people/:id", (c) => {
 });
 
 // POST a new person
-app.post("/api/people", async (c) => {
+app.post("/api/people", async (c: any) => {
   const { name } = await c.req.json();
   db.query("INSERT INTO people (name) VALUES (?)", [name]);
   return c.json({ message: "Person added successfully" });
 });
 
 // PUT (update) a person by ID
-app.put("/api/people/:id", async (c) => {
+app.put("/api/people/:id", async (c: any) => {
   const id = c.req.param("id");
   const { name } = await c.req.json();
   db.query("UPDATE people SET name = ? WHERE id = ?", [name, id]);
@@ -60,7 +60,7 @@ app.put("/api/people/:id", async (c) => {
 });
 
 // DELETE a person by ID
-app.delete("/api/people/:id", (c) => {
+app.delete("/api/people/:id", (c: any) => {
   const id = c.req.param("id");
   db.query("DELETE FROM people WHERE id = ?", [id]);
   return c.json({ message: "Person deleted successfully" });
@@ -68,4 +68,5 @@ app.delete("/api/people/:id", (c) => {
 
 // Start the server
 console.log("Server running on http://localhost:8000");
-Deno.serve(app.fetch);
+Deno.serve(app.fetch); // by default the server will run in port 8000
+//Deno.serve({ port: 8080 }, app.fetch);

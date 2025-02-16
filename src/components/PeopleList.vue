@@ -1,21 +1,4 @@
 // src/components/PeopleList.vue
-<template>
-  <div>
-    <h1>CRUD</h1>
-    <form @submit.prevent="handleSubmit">
-      <input v-model="formData.name" placeholder="Enter name" required />
-      <button class="btn" type="submit">{{ isEditing ? 'Update' : 'Create' }}</button>
-    </form>
-    <ul>
-      <li v-for="person in people" :key="person.id">
-        <router-link :to="`/person/${person.id}`">{{ person.name }}</router-link>
-        <button class="btn" @click="editPerson(person)">Edit</button>
-        <button class="btn" @click="deletePerson(person.id)">Delete</button>
-      </li>
-    </ul>
-  </div>
-</template>
-
 <script>
 import { ref, onMounted } from 'vue';
 
@@ -68,6 +51,24 @@ export default {
   }
 };
 </script>
+
+<template>
+  <div>
+    <h1>CRUD</h1>
+    <form @submit.prevent="handleSubmit">
+      <input v-model="formData.name" placeholder="Enter name" required />
+      <button class="btn" type="submit">{{ isEditing ? 'Update' : 'Create' }}</button>
+    </form>
+    <ul>
+      <li v-for="person in people" :key="person.id">
+        <router-link :to="`/person/${person.id}`">{{ person.name }}</router-link>
+        <button class="btn" @click="editPerson(person)">Edit</button>
+        <button class="btn" @click="deletePerson(person.id)">Delete</button>
+      </li>
+    </ul>
+  </div>
+</template>
+
 
 <style>
 .btn {
