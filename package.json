@@ -1,5 +1,5 @@
 {
-  "name": "deno-vue-ssr2",
+  "name": "deno-vue-ssr",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -11,9 +11,9 @@
     "preview": "cross-env NODE_ENV=production node server"
   },
   "dependencies": {
+    "better-sqlite3": "^11.8.1",
     "compression": "^1.7.5",
     "express": "^5.0.1",
-    "hono": "^4.7.1",
     "sirv": "^3.0.0",
     "vue": "^3.5.13",
     "vue-router": "^4.5.0"

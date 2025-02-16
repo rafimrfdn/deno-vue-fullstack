@@ -1,7 +1,22 @@
-# Vue 3 + Vite
+# CRUD app with Vue 3 + Vite + Vue Router + Express + Sqlite 
 
-This template should help get you started developing with Vue 3 in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+This is crud app runs Vue + vite with SSR activate using Express and save and serve data using Sqlite database.
 
-## Recommended IDE Setup
+Also the router activate and serve using Vue Router so we can navigate to other pages.
 
-- [VS Code](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar)
+```sh
+$ deno install
+$ deno task dev
+$ deno task build
+$ deno task preview
+```
+
+you will be prompted to install manually the better-sqlite3
+
+```sh
+$ deno install --allow-scripts=npm:better-sqlite3@11.8.1
+```
+
+![deno vue express vue-router sqlite crud instal proces](./install-process.png)
+![deno vue fullstack crud](./deno-vue-fullstack.png)
+![deno vue express vue-router sqlite crud](./deno-vue-fullstack-crud-ssr.png)

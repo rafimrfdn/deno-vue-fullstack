@@ -1,15 +1,18 @@
 import fs from 'node:fs/promises'
 import express from 'express'
-import { Database } from "jsr:@db/sqlite";
+import Database from 'better-sqlite3'
+//import { Database } from "jsr:@db/sqlite";
+
 
 // Constants
 const isProduction = process.env.NODE_ENV === 'production'
-const port = process.env.PORT || 8000
+const port = process.env.PORT || 5173
 const base = process.env.BASE || '/'
 
 // SQLite Database Setup
 const db = new Database('./database.sqlite', { verbose: console.log });
-db.exec(`CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, name TEXT);`);
+db.prepare(`CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, name TEXT);`);
+
 
 // Cached production assets
 const templateHtml = isProduction
@@ -21,14 +24,29 @@ const app = express()
 app.use(express.json());
 
 // API Endpoint for fetching users
-app.get('/api/users', (req, res) => {
+app.get('/api/people', (req, res) => {
   const stmt = db.prepare('SELECT * FROM users');
   const users = stmt.all();
   res.json(users);
 });
 
+// GET a single person by ID
+app.get("/api/people/:id", (req, res) => {
+  const { id } = req.params;
+
+  // Assuming you're using a library like `sqlite3` or similar
+  const query = db.prepare("SELECT id, name FROM users WHERE id = ?");
+  const person = query.get(id); // Use .get() to fetch a single row
+
+  if (person) {
+    return res.json({ id: person.id, name: person.name });
+  } else {
+    return res.status(404).json({ error: "Person not found" });
+  }
+});
+
 // API Endpoint for adding a user
-app.post('/api/users', (req, res) => {
+app.post('/api/people', (req, res) => {
   const { name } = req.body;
   if (!name) {
     return res.status(400).json({ error: 'Name is required' });
@@ -39,7 +57,7 @@ app.post('/api/users', (req, res) => {
 });
 
 // API Endpoint for updating a user
-app.put('/api/users/:id', (req, res) => {
+app.put('/api/people/:id', (req, res) => {
   const { id } = req.params;
   const { name } = req.body;
   if (!name) {
@@ -54,7 +72,7 @@ app.put('/api/users/:id', (req, res) => {
 });
 
 // API Endpoint for deleting a user
-app.delete('/api/users/:id', (req, res) => {
+app.delete('/api/people/:id', (req, res) => {
   const { id } = req.params;
   const stmt = db.prepare('DELETE FROM users WHERE id = ?');
   const result = stmt.run(id);
@@ -98,12 +116,10 @@ app.use('*all', async (req, res) => {
       render = (await vite.ssrLoadModule('/src/entry-server.js')).render
     } else {
       template = templateHtml
-      render = (await import('./dist/server/entry-server.j')).render
+      render = (await import('./dist/server/entry-server.js')).render
     }
 
     const rendered = await render(url)
-
-    //const head = (rendered.head ?? '') + generateHydrationScript()
 
     const html = template
       .replace(`<!--app-head-->`, rendered.head ?? '')
@@ -116,6 +132,7 @@ app.use('*all', async (req, res) => {
     res.status(500).end(e.stack)
   }
 })
+
 
 // Start http server
 app.listen(port, () => {
