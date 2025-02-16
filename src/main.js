@@ -4,6 +4,7 @@ import router from './router';
 
 export function createApp() {
   const app = createSSRApp(App)
-  app.use(router);
+  app.use(router); // Ensure router is properly used
   return { app }
 }
+
