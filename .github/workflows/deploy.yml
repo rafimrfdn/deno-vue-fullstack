@@ -37,8 +37,8 @@ jobs:
       - name: Upload to Deno Deploy
         uses: denoland/deployctl@v1
         with:
-          project: "deno-vue-ssr"
-          entrypoint: "api/server.ts"
-          root: "dist"
+          project: "deno-vue-fullstack"
+          entrypoint: "/server.js"
+          root: "/"
           
           
