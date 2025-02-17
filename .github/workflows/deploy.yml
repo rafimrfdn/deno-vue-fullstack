@@ -38,7 +38,7 @@ jobs:
         uses: denoland/deployctl@v1
         with:
           project: "deno-vue-fullstack"
-          entrypoint: "dist/client/index.html"
+          entrypoint: "./client/index.html"
           root: "dist"
           
           
